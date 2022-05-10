@@ -6,16 +6,21 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-public class EditarUsuario {
-    private EditText etEditarNombre, etEditarEdad;
-    private Button btnGuardarCambios, btnCancelarEdicion;
-    private Usuario usuario;//El usuario que vamos a estar editando
-    private UsuariosController usuariosController;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.pe.app.sqlite_registroagenda.controllers.UserController;
+import com.pe.app.sqlite_registroagenda.models.User;
+
+public class EditarUsuario extends AppCompatActivity {
+    private EditText editNombre, editTelefono, editCorreo;
+    private Button btnSaveChange;
+    private User usuario;//El usuario que vamos a estar editando
+    private UserController usuariosController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_editar_usuario);
+        setContentView(R.layout.activity_edit);
 
         // Recuperar datos que enviaron
         Bundle extras = getIntent().getExtras();
@@ -25,71 +30,74 @@ public class EditarUsuario {
             return;
         }
         // Instanciar el controlador de las mascotas
-        usuariosController = new UsuariosController(EditarUsuarioActivity.this);
+        usuariosController = new UserController(EditarUsuario.this);
 
-        // Rearmar la mascota
-        // Nota: igualmente solamente podríamos mandar el id y recuperar la mascota de la BD
+        // Rearmar usuario
+        // Nota: igualmente solamente podríamos mandar el id y recuperar el usuario de la BD
         long idUsuario = extras.getLong("idUsuario");
         String nombreUsuario = extras.getString("nombreUsuario");
-        int edadUsuario = extras.getInt("edadUsuario");
-        usuario = new Usuario(nombreUsuario, edadUsuario, idUsuario);
-
+        int telefonoUsuario = extras.getInt("telefonoUsuario");
+        String correoUsuario = extras.getString("correoUsuario");
+        usuario = new User(nombreUsuario, correoUsuario, telefonoUsuario, (int) idUsuario);
 
         // Ahora declaramos las vistas
-        etEditarEdad = findViewById(R.id.etEditarEdad);
-        etEditarNombre = findViewById(R.id.etEditarNombre);
-        btnCancelarEdicion = findViewById(R.id.btnCancelarEdicionUsuario);
-        btnGuardarCambios = findViewById(R.id.btnGuardarCambiosUsuario);
+        editTelefono = findViewById(R.id.editTelefono);
+        editNombre = findViewById(R.id.editNombre);
+        editCorreo = findViewById(R.id.editCorreo);
+        btnSaveChange = findViewById(R.id.btnSaveChange);
 
 
-        // Rellenar los EditText con los datos de la mascota
-        etEditarEdad.setText(String.valueOf(usuario.getEdad()));
-        etEditarNombre.setText(usuario.getNombre());
+        // Rellenar los EditText con los datos de los usuarios
+        editTelefono.setText(String.valueOf(usuario.getNumero()));
+        editNombre.setText(usuario.getNombre());
+        editCorreo.setText(usuario.getCorreo());
 
         // Listener del click del botón para salir, simplemente cierra la actividad
-        btnCancelarEdicion.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
 
         // Listener del click del botón que guarda cambios
-        btnGuardarCambios.setOnClickListener(new View.OnClickListener() {
+        btnSaveChange.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // Remover previos errores si existen
-                etEditarNombre.setError(null);
-                etEditarEdad.setError(null);
+                editNombre.setError(null);
+                editTelefono.setError(null);
+                editCorreo.setError(null);
                 // Crear la mascota con los nuevos cambios pero ponerle
                 // el id de la anterior
-                String nuevoNombre = etEditarNombre.getText().toString();
-                String posibleNuevaEdad = etEditarEdad.getText().toString();
+                String nuevoNombre = editNombre.getText().toString();
+                String posibleNuevoTelefono = editTelefono.getText().toString();
+                String nuevoCorreo = editCorreo.getText().toString();
                 if (nuevoNombre.isEmpty()) {
-                    etEditarNombre.setError("Escribe el nombre");
-                    etEditarNombre.requestFocus();
+                    editNombre.setError("Escribe el nombre");
+                    editNombre.requestFocus();
                     return;
                 }
-                if (posibleNuevaEdad.isEmpty()) {
-                    etEditarEdad.setError("Escribe la edad");
-                    etEditarEdad.requestFocus();
+                if (posibleNuevoTelefono.isEmpty()) {
+                    editTelefono.setError("Escribe el telefono");
+                    editTelefono.requestFocus();
                     return;
                 }
+                if (nuevoCorreo.isEmpty()) {
+                    editCorreo.setError("Escribe el nuevo correo");
+                    editCorreo.requestFocus();
+                    return;
+                }
+
                 // Si no es entero, igualmente marcar error
-                int nuevaEdad;
+                int nuevoTelefono;
                 try {
-                    nuevaEdad = Integer.parseInt(posibleNuevaEdad);
+                    nuevoTelefono = Integer.parseInt(posibleNuevoTelefono);
                 } catch (NumberFormatException e) {
-                    etEditarEdad.setError("Escribe un número");
-                    etEditarEdad.requestFocus();
+                    editTelefono.setError("Escribe un número");
+                    editTelefono.requestFocus();
                     return;
                 }
                 // Si llegamos hasta aquí es porque los datos ya están validados
-                Usuario mascotaConNuevosCambios = new Usuario(nuevoNombre, nuevaEdad, usuario.getId());
-                int filasModificadas = usuariosController.guardarCambios(mascotaConNuevosCambios);
+                User usuarioConNuevosCambios = new User(nuevoNombre, nuevoCorreo, nuevoTelefono, usuario.getId());
+                int filasModificadas = usuariosController.guardarCambios(usuarioConNuevosCambios);
                 if (filasModificadas != 1) {
                     // De alguna forma ocurrió un error porque se debió modificar únicamente una fila
-                    Toast.makeText(EditarUsuarioActivity.this, "Error guardando cambios. Intente de nuevo.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(EditarUsuario.this, "Error guardando cambios. Intente de nuevo.", Toast.LENGTH_SHORT).show();
                 } else {
                     // Si las cosas van bien, volvemos a la principal
                     // cerrando esta actividad
